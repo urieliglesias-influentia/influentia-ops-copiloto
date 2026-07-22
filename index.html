@@ -1,0 +1,850 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Copiloto de Operaciones — Influentia</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧰</text></svg>">
+<style>
+  :root {
+    color-scheme: light;
+    --page:#f8f7fb; --surface:#fdfdfe; --surface-2:#f1eff7; --surface-3:#e9e6f2;
+    --ink:#141219; --ink-2:#55525e; --ink-3:#8b8794;
+    --hair:rgba(20,18,25,.10); --accent:#5b4bc4; --accent-ink:#fff; --accent-wash:rgba(91,75,196,.08);
+    --ok:#0a7d0a; --warn:#a56f00; --bad:#c23434;
+    --ok-wash:rgba(12,163,12,.10); --warn-wash:rgba(250,178,25,.14); --bad-wash:rgba(208,59,59,.10);
+    --shadow:0 1px 2px rgba(20,18,25,.05),0 8px 24px -12px rgba(20,18,25,.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page:#0e0d13; --surface:#17151e; --surface-2:#1e1c27; --surface-3:#262330;
+      --ink:#f2f1f7; --ink-2:#b8b5c4; --ink-3:#7d7a89;
+      --hair:rgba(242,241,247,.10); --accent:#9085e9; --accent-ink:#14121c; --accent-wash:rgba(144,133,233,.14);
+      --ok:#4fc46f; --warn:#fab219; --bad:#e05252;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -14px rgba(0,0,0,.55);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page:#0e0d13; --surface:#17151e; --surface-2:#1e1c27; --surface-3:#262330;
+    --ink:#f2f1f7; --ink-2:#b8b5c4; --ink-3:#7d7a89;
+    --hair:rgba(242,241,247,.10); --accent:#9085e9; --accent-ink:#14121c; --accent-wash:rgba(144,133,233,.14);
+    --ok:#4fc46f; --warn:#fab219; --bad:#e05252;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -14px rgba(0,0,0,.55);
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --page:#f8f7fb; --surface:#fdfdfe; --surface-2:#f1eff7; --surface-3:#e9e6f2;
+    --ink:#141219; --ink-2:#55525e; --ink-3:#8b8794;
+    --hair:rgba(20,18,25,.10); --accent:#5b4bc4; --accent-ink:#fff; --accent-wash:rgba(91,75,196,.08);
+    --ok:#0a7d0a; --warn:#a56f00; --bad:#c23434;
+    --shadow:0 1px 2px rgba(20,18,25,.05),0 8px 24px -12px rgba(20,18,25,.12);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1100px; margin:0 auto; padding:26px 18px 90px; }
+  .eyebrow { font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); font-weight:600; }
+  h1 { font-size:clamp(24px,4vw,32px); margin:4px 0 6px; letter-spacing:-.02em; font-weight:750; }
+  .sub { color:var(--ink-2); margin:0 0 14px; max-width:70ch; }
+  .caps { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 4px; }
+  .cap { font-size:12px; padding:3px 10px; border-radius:999px; border:1px solid var(--hair); background:var(--surface); color:var(--ink-2); display:inline-flex; align-items:center; gap:6px; }
+  .cap .d { width:7px; height:7px; border-radius:50%; background:var(--ink-3); }
+  .cap.on .d { background:var(--ok); } .cap.off .d { background:var(--ink-3); }
+
+  .howto { background:var(--surface); border:1px solid var(--hair); border-radius:10px; margin:12px 0 18px; box-shadow:var(--shadow); }
+  .howto summary { cursor:pointer; padding:11px 15px; font-weight:640; list-style:none; font-size:14px; }
+  .howto summary::-webkit-details-marker { display:none; }
+  .howto .in { padding:0 15px 13px; color:var(--ink-2); font-size:13.5px; }
+  .howto .in ol { margin:6px 0 0; padding-left:20px; display:grid; gap:4px; }
+
+  nav.tabs { display:flex; gap:6px; flex-wrap:wrap; margin:16px 0 18px; }
+  .tab { border:1px solid var(--hair); background:var(--surface); color:var(--ink-2); border-radius:10px; padding:10px 16px; font-size:14.5px; font-weight:620; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:8px; }
+  .tab[aria-selected="true"] { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  .tab:focus-visible, button:focus-visible, .btn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+  .mod { display:none; } .mod.act { display:block; }
+  .cols { display:grid; grid-template-columns:minmax(300px,430px) 1fr; gap:16px; align-items:start; }
+  @media (max-width:860px){ .cols { grid-template-columns:1fr; } }
+  .panel { background:var(--surface); border:1px solid var(--hair); border-radius:12px; padding:16px; box-shadow:var(--shadow); }
+  .panel h3 { margin:0 0 12px; font-size:15.5px; letter-spacing:-.01em; }
+  label { display:block; font-size:12.5px; font-weight:620; color:var(--ink-2); margin:11px 0 4px; }
+  label:first-of-type { margin-top:0; }
+  label .opt { font-weight:450; color:var(--ink-3); }
+  input[type=text], input[type=date], input[type=number], select, textarea {
+    width:100%; border:1px solid var(--hair); background:var(--page); color:var(--ink);
+    border-radius:8px; padding:8px 10px; font:inherit; font-size:14px;
+  }
+  textarea { min-height:74px; resize:vertical; }
+  .hintt { font-size:11.5px; color:var(--ink-3); margin-top:3px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:480px){ .row2 { grid-template-columns:1fr; } }
+  .gen { margin-top:16px; width:100%; background:var(--accent); color:var(--accent-ink); border:0; border-radius:10px; padding:11px; font:inherit; font-weight:680; font-size:15px; cursor:pointer; }
+  .gen:hover { filter:brightness(1.06); }
+  .subtabs { display:flex; gap:6px; margin-bottom:14px; }
+  .subtab { border:1px solid var(--hair); background:var(--surface-2); color:var(--ink-2); border-radius:8px; padding:6px 12px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .subtab[aria-selected="true"] { background:var(--accent-wash); color:var(--accent); border-color:var(--accent); }
+
+  .out { min-height:120px; }
+  .out .placeholder { color:var(--ink-3); font-size:14px; padding:26px 10px; text-align:center; }
+  .block { border:1px solid var(--hair); border-radius:10px; margin-bottom:12px; overflow:hidden; }
+  .block .bh { display:flex; align-items:center; gap:8px; padding:8px 12px; background:var(--surface-2); font-size:12.5px; font-weight:680; letter-spacing:.02em; flex-wrap:wrap; }
+  .block .bh .sp { flex:1; }
+  .block pre { margin:0; padding:12px 14px; white-space:pre-wrap; word-break:break-word; font:13.5px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--ink); background:var(--surface); max-height:420px; overflow:auto; }
+  .bbtn { border:1px solid var(--hair); background:var(--surface); color:var(--ink-2); border-radius:7px; padding:4px 9px; font-size:12px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .bbtn:hover { border-color:var(--accent); color:var(--accent); }
+  .bbtn.pri { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  .bbtn:disabled { opacity:.45; cursor:default; }
+  .msg { font-size:12.5px; border-radius:8px; padding:8px 11px; margin:8px 0 0; display:none; }
+  .msg.show { display:block; }
+  .msg.ok { background:var(--ok-wash); color:var(--ok); }
+  .msg.warn { background:var(--warn-wash); color:var(--warn); }
+  .msg.bad { background:var(--bad-wash); color:var(--bad); }
+
+  table.criba { width:100%; border-collapse:collapse; font-size:13.5px; }
+  .criba th { text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-3); padding:6px 8px; border-bottom:1px solid var(--hair); }
+  .criba td { padding:8px; border-bottom:1px solid var(--hair); vertical-align:middle; font-variant-numeric:tabular-nums; }
+  .pill { font-size:11.5px; font-weight:680; padding:2px 9px; border-radius:999px; }
+  .pill.avanza { background:var(--ok-wash); color:var(--ok); }
+  .pill.dudoso { background:var(--warn-wash); color:var(--warn); }
+  .pill.descarta { background:var(--bad-wash); color:var(--bad); }
+  .crit { display:grid; grid-template-columns:1fr 84px 30px; gap:8px; align-items:center; margin-bottom:6px; }
+  .cand-scores { display:grid; gap:6px; margin-top:8px; }
+  .cs { display:grid; grid-template-columns:1fr 130px 26px; gap:10px; align-items:center; font-size:13px; color:var(--ink-2); }
+  .cs input[type=range] { width:100%; accent-color:var(--accent); }
+  .del { border:0; background:none; color:var(--ink-3); cursor:pointer; font-size:15px; padding:2px; }
+  .del:hover { color:var(--bad); }
+  .addbtn { border:1px dashed var(--hair); background:none; color:var(--ink-2); border-radius:8px; padding:7px 12px; font-size:13px; cursor:pointer; font-family:inherit; margin-top:8px; }
+  .addbtn:hover { border-color:var(--accent); color:var(--accent); }
+  .toolrow { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  footer { margin-top:40px; padding-top:14px; border-top:1px solid var(--hair); font-size:12.5px; color:var(--ink-3); }
+  .modetog { display:flex; gap:0; border:1px solid var(--hair); border-radius:9px; overflow:hidden; margin-bottom:14px; }
+  .modetog button { flex:1; border:0; background:var(--surface); color:var(--ink-2); padding:8px; font:inherit; font-size:13.5px; font-weight:620; cursor:pointer; }
+  .modetog button[aria-pressed="true"] { background:var(--accent); color:var(--accent-ink); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">Influentia · Operaciones</div>
+  <h1>🧰 Copiloto de Operaciones</h1>
+  <p class="sub">Tres herramientas para el día a día: publicar una vacante y cribar candidatos, redactar comunicados internos y montar grupos o eventos de equipo. Todo genera borradores — <b>tú siempre revisas y envías</b>; la herramienta nunca envía nada sola.</p>
+  <div class="caps">
+    <span class="cap on"><span class="d"></span>Funciona en cualquier navegador — nada que instalar</span>
+    <span class="cap on"><span class="d"></span>✉️ Los borradores se abren en tu Gmail</span>
+    <span class="cap on"><span class="d"></span>🪄 Los prompts se pegan en tu Gemini</span>
+  </div>
+
+  <details class="howto">
+    <summary>¿Cómo funciona? (30 segundos)</summary>
+    <div class="in">
+      <ol>
+        <li>Rellena el formulario de la izquierda con lo que sepas — los campos opcionales se pueden dejar vacíos.</li>
+        <li>Pulsa <b>Generar</b>: obtienes el texto listo a la derecha, estructurado y con el tono de la casa.</li>
+        <li>Con cada bloque puedes: <b>📋 copiarlo</b>, <b>✉️ abrirlo como borrador en tu Gmail</b> (se abre una pestaña con el email ya escrito; nunca se envía solo), <b>⬇️ descargarlo</b> o <b>🪄 copiar un prompt</b> para pulirlo con la IA: pégalo en Gemini tal cual.</li>
+        <li>Lo que escribas se guarda en este navegador automáticamente (solo lo ves tú).</li>
+      </ol>
+    </div>
+  </details>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-mod="vac" aria-selected="true">📣 Vacantes y criba</button>
+    <button class="tab" role="tab" data-mod="com" aria-selected="false">📨 Comunicados internos</button>
+    <button class="tab" role="tab" data-mod="grp" aria-selected="false">🎉 Grupos y eventos</button>
+  </nav>
+
+  <!-- ═══════════ MÓDULO 1 · VACANTES ═══════════ -->
+  <section class="mod act" id="mod-vac">
+    <div class="subtabs" role="tablist">
+      <button class="subtab" data-sub="vacante" aria-selected="true">1 · Publicar vacante</button>
+      <button class="subtab" data-sub="criba" aria-selected="false">2 · Criba de candidatos</button>
+    </div>
+
+    <div class="sub-vacante">
+      <div class="cols">
+        <div class="panel">
+          <h3>Datos de la vacante</h3>
+          <label>Puesto *</label>
+          <input type="text" id="v-puesto" placeholder="p. ej. Account Manager de marcas">
+          <div class="row2">
+            <div><label>Área</label>
+              <select id="v-area"><option>Cuentas / Account Management</option><option>Operaciones</option><option>Contenido</option><option>Growth Lab</option><option>Finanzas / Administración</option><option>Otro</option></select></div>
+            <div><label>Modalidad</label>
+              <select id="v-modalidad"><option>Híbrido (Barcelona)</option><option>Presencial (Barcelona)</option><option>Remoto (España)</option></select></div>
+          </div>
+          <div class="row2">
+            <div><label>Tipo de contrato</label>
+              <select id="v-contrato"><option>Indefinido</option><option>Temporal</option><option>Prácticas / beca</option><option>Freelance</option></select></div>
+            <div><label>Rango salarial <span class="opt">(opcional)</span></label>
+              <input type="text" id="v-salario" placeholder="p. ej. 24-28k €"></div>
+          </div>
+          <label>Misión del puesto en una frase <span class="opt">(opcional)</span></label>
+          <input type="text" id="v-mision" placeholder="p. ej. llevar la relación diaria con 5-6 marcas y sus campañas">
+          <label>Responsabilidades <span class="opt">(una por línea)</span></label>
+          <textarea id="v-resp" placeholder="Gestionar campañas de principio a fin&#10;Negociar con marcas&#10;Coordinar publicaciones con los creadores"></textarea>
+          <label>Requisitos imprescindibles <span class="opt">(una por línea)</span></label>
+          <textarea id="v-must" placeholder="2+ años en agencia o marketing de influencers&#10;Español nativo e inglés fluido&#10;Excel/Sheets avanzado"></textarea>
+          <label>Deseables <span class="opt">(una por línea, opcional)</span></label>
+          <textarea id="v-nice" placeholder="Conocimiento del nicho finanzas/inversión&#10;Experiencia con Holded"></textarea>
+          <label>Fecha límite para aplicar <span class="opt">(opcional)</span></label>
+          <input type="text" id="v-plazo" placeholder="p. ej. 15 de agosto">
+          <button class="gen" id="v-gen">Generar vacante</button>
+        </div>
+        <div class="panel out" id="v-out"><div class="placeholder">Rellena el puesto y pulsa «Generar vacante».<br>Obtendrás: post de LinkedIn, descripción larga, preguntas de filtro y la rúbrica de criba.</div></div>
+      </div>
+    </div>
+
+    <div class="sub-criba" style="display:none">
+      <div class="cols">
+        <div class="panel">
+          <h3>Rúbrica de evaluación</h3>
+          <p class="hintt" style="margin:0 0 10px">Criterios y pesos (se normalizan a 100). Se rellenan solos al generar una vacante, o edítalos aquí.</p>
+          <div id="c-crits"></div>
+          <button class="addbtn" id="c-addcrit">+ Añadir criterio</button>
+          <h3 style="margin-top:20px">Añadir candidato</h3>
+          <label>Nombre *</label>
+          <input type="text" id="c-nombre" placeholder="Nombre y apellido">
+          <label>Notas <span class="opt">(opcional)</span></label>
+          <input type="text" id="c-notas" placeholder="p. ej. viene recomendado por…">
+          <div class="cand-scores" id="c-scores"></div>
+          <button class="gen" id="c-add">Añadir a la criba</button>
+          <div class="toolrow">
+            <button class="bbtn" id="c-prompt">🪄 Prompt para evaluar un CV con IA</button>
+          </div>
+          <div class="msg" id="c-msg"></div>
+        </div>
+        <div class="panel">
+          <h3>Ranking <span class="hintt" id="c-count" style="display:inline"></span></h3>
+          <div id="c-tabla"><div class="placeholder">Aún no hay candidatos. Añádelos a la izquierda puntuando cada criterio de 0 a 5.</div></div>
+          <div class="toolrow" id="c-actions" style="display:none">
+            <button class="bbtn" id="c-export">⬇️ Descargar ranking (.md)</button>
+            <button class="bbtn" id="c-copy">📋 Copiar ranking</button>
+            <button class="bbtn" id="c-clear">🗑 Vaciar criba</button>
+          </div>
+          <div class="msg" id="c-msg2"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ MÓDULO 2 · COMUNICADOS ═══════════ -->
+  <section class="mod" id="mod-com">
+    <div class="cols">
+      <div class="panel">
+        <h3>Datos del comunicado</h3>
+        <label>Tipo</label>
+        <select id="m-tipo">
+          <option value="incorporacion">Nueva incorporación (influencer o empleado)</option>
+          <option value="proceso">Nuevo proceso / cambio de forma de trabajar</option>
+          <option value="aviso">Aviso importante</option>
+          <option value="incidencia">Corrección de un error / incidencia</option>
+          <option value="logro">Logro / celebración</option>
+          <option value="recordatorio">Recordatorio</option>
+        </select>
+        <label>Título corto *</label>
+        <input type="text" id="m-titulo" placeholder="p. ej. Alta de nuevo creador en el roster">
+        <label>Hechos clave <span class="opt">(uno por línea)</span></label>
+        <textarea id="m-hechos" placeholder="Quién / qué / cuándo&#10;Detalle importante 2&#10;Detalle importante 3"></textarea>
+        <div class="row2">
+          <div><label>A quién va</label>
+            <select id="m-quien"><option>Todo el equipo</option><option>Accounts</option><option>Contenido</option><option>Growth Lab</option><option>Administración</option></select></div>
+          <div><label>Tono</label>
+            <select id="m-tono"><option value="cercano">Cercano</option><option value="neutro">Neutro</option><option value="urgente">Urgente</option></select></div>
+        </div>
+        <label>Qué tienen que hacer <span class="opt">(acción concreta, opcional)</span></label>
+        <input type="text" id="m-accion" placeholder="p. ej. actualizar la firma de correo antes del viernes">
+        <div class="row2">
+          <div><label>Fecha límite <span class="opt">(opcional)</span></label>
+            <input type="text" id="m-fecha" placeholder="p. ej. viernes 24"></div>
+          <div><label>Enlace o documento <span class="opt">(opcional)</span></label>
+            <input type="text" id="m-enlace" placeholder="URL de Drive, doc…"></div>
+        </div>
+        <button class="gen" id="m-gen">Generar comunicado</button>
+      </div>
+      <div class="panel out" id="m-out"><div class="placeholder">Rellena el título y los hechos y pulsa «Generar comunicado».<br>Obtendrás: email listo, versión corta para chat y checklist antes de enviar.</div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ MÓDULO 3 · GRUPOS Y EVENTOS ═══════════ -->
+  <section class="mod" id="mod-grp">
+    <div class="cols">
+      <div class="panel">
+        <div class="modetog" role="group" aria-label="Modo">
+          <button id="g-mode-grupo" aria-pressed="true">Grupo de trabajo</button>
+          <button id="g-mode-evento" aria-pressed="false">Evento / actividad</button>
+        </div>
+        <div id="g-form-grupo">
+          <label>Nombre del grupo *</label>
+          <input type="text" id="g-nombre" placeholder="p. ej. Task force informes de campaña">
+          <label>Propósito / entregable *</label>
+          <input type="text" id="g-proposito" placeholder="p. ej. unificar el formato de informes antes de septiembre">
+          <label>Miembros <span class="opt">(uno por línea)</span></label>
+          <textarea id="g-miembros" placeholder="Nombre 1 (rol)&#10;Nombre 2&#10;Nombre 3"></textarea>
+          <div class="row2">
+            <div><label>Quién lidera</label><input type="text" id="g-lider" placeholder="por defecto: tú"></div>
+            <div><label>Cadencia</label>
+              <select id="g-cadencia"><option>Semanal</option><option>Quincenal</option><option>Puntual (hasta terminar)</option></select></div>
+          </div>
+          <label>Fecha de kickoff <span class="opt">(opcional)</span></label>
+          <input type="text" id="g-kickoff" placeholder="p. ej. lunes 27, 10:00">
+          <button class="gen" id="g-gen-grupo">Generar ficha del grupo</button>
+        </div>
+        <div id="g-form-evento" style="display:none">
+          <label>Tipo de evento</label>
+          <select id="e-tipo">
+            <option>Comida de equipo</option><option>Afterwork</option><option>Teambuilding (actividad)</option><option>Celebración (hito/cumple)</option><option>Jornada offsite</option><option value="sorpresa">Sorpréndeme (proponme 3 ideas)</option>
+          </select>
+          <div class="row2">
+            <div><label>Fecha aproximada</label><input type="text" id="e-fecha" placeholder="p. ej. último jueves de mes"></div>
+            <div><label>Nº de personas</label><input type="number" id="e-personas" min="2" placeholder="12"></div>
+          </div>
+          <div class="row2">
+            <div><label>Presupuesto por persona <span class="opt">(€, opcional)</span></label><input type="number" id="e-budget" min="0" placeholder="30"></div>
+            <div><label>Zona <span class="opt">(opcional)</span></label><input type="text" id="e-zona" placeholder="p. ej. cerca de la oficina"></div>
+          </div>
+          <label>Restricciones <span class="opt">(alergias, horarios… opcional)</span></label>
+          <input type="text" id="e-restric" placeholder="p. ej. 2 veganos, terminar antes de las 19h">
+          <button class="gen" id="g-gen-evento">Generar plan del evento</button>
+        </div>
+      </div>
+      <div class="panel out" id="g-out"><div class="placeholder">Elige modo, rellena los datos y genera.<br>Obtendrás: ficha o plan completo, invitación lista y checklist con plazos.</div></div>
+    </div>
+  </section>
+
+  <footer>
+    Copiloto de Operaciones v1 (edición Gemini) · 22-jul-2026 · Los borradores se abren en tu Gmail y nunca se envían solos. Los datos de los formularios viven solo en este navegador. Herramienta interna de Influentia — planes de origen: <code>automatizaciones/plan-reclutamiento.md</code>, <code>plan-comunicados-internos.md</code>, <code>plan-montaje-grupos-eventos.md</code>.
+  </footer>
+</div>
+
+<script>
+'use strict';
+/* ───────────────────────── infra común ───────────────────────── */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const lines = t => (t||'').split('\n').map(x => x.trim().replace(/^[-•*]\s*/,'')).filter(Boolean);
+const LS = 'influentia-ops/';
+const store = (k, v) => { try { localStorage.setItem(LS+k, JSON.stringify(v)); } catch(e){} };
+const read = (k, d) => { try { const v = localStorage.getItem(LS+k); return v ? JSON.parse(v) : d; } catch(e){ return d; } };
+
+/* edición Gemini (hosteada): sin dependencias de claude.ai — Gmail por enlace estándar, descarga nativa */
+const hasDL = true;
+let gmailState = 'on';
+function flash(el, cls, txt, ms) {
+  el.className = 'msg show ' + cls; el.textContent = txt;
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), ms || 5000);
+}
+
+async function copyText(txt, msgEl) {
+  try { await navigator.clipboard.writeText(txt); if (msgEl) flash(msgEl, 'ok', '📋 Copiado.'); return true; }
+  catch(e) {
+    const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta);
+    ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch(_){}
+    ta.remove(); if (msgEl) flash(msgEl, ok ? 'ok' : 'bad', ok ? '📋 Copiado.' : 'No se pudo copiar — selecciona el texto a mano.');
+    return ok;
+  }
+}
+
+function saveFile(filename, data, msgEl) {
+  try {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([data], { type: 'text/markdown;charset=utf-8' }));
+    a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    flash(msgEl, 'ok', '⬇️ Descargado: ' + filename);
+  } catch(e) { flash(msgEl, 'bad', 'No se pudo descargar — usa 📋 copiar.'); }
+}
+
+async function gmailDraft(subject, body, msgEl, btn) {
+  const url = 'https://mail.google.com/mail/?view=cm&fs=1&su=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  if (url.length > 7500) {
+    await copyText(body, null);
+    window.open('https://mail.google.com/mail/?view=cm&fs=1&su=' + encodeURIComponent(subject), '_blank', 'noopener');
+    flash(msgEl, 'ok', '✉️ Se ha abierto el borrador con el asunto; el texto era largo y lo he COPIADO — pégalo en el cuerpo (Cmd/Ctrl+V).');
+    return;
+  }
+  const w = window.open(url, '_blank', 'noopener');
+  if (w) flash(msgEl, 'ok', '✉️ Se ha abierto un borrador en tu Gmail. Pon el destinatario, revisa y envía.');
+  else { await copyText(subject + '\n\n' + body, null); flash(msgEl, 'warn', 'Tu navegador ha bloqueado la ventana — el texto está copiado: pégalo en un email nuevo.'); }
+}
+
+/* bloque de salida reutilizable */
+let BLOCKS = {}; let outsRegistry = [];
+function renderBlocks(el, blocks, msgId) {
+  BLOCKS[msgId] = blocks;
+  el.innerHTML = blocks.map((b, i) => `
+    <div class="block">
+      <div class="bh">${esc(b.title)}<span class="sp"></span>
+        <button class="bbtn" data-a="copy" data-m="${msgId}" data-i="${i}">📋 Copiar</button>
+        ${b.subject !== undefined && gmailState === 'on' ? `<button class="bbtn pri" data-a="gmail" data-m="${msgId}" data-i="${i}">✉️ Borrador en mi Gmail</button>` : ''}
+        ${b.file && hasDL ? `<button class="bbtn" data-a="dl" data-m="${msgId}" data-i="${i}">⬇️ .md</button>` : ''}
+        ${b.prompt ? `<button class="bbtn" data-a="prompt" data-m="${msgId}" data-i="${i}">🪄 Prompt para Gemini</button>` : ''}
+      </div>
+      <pre>${esc(b.text)}</pre>
+    </div>`).join('') + `<div class="msg" id="${msgId}"></div>`;
+}
+function rerenderOuts() { outsRegistry.forEach(f => f()); }
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('.bbtn[data-a]'); if (!b) return;
+  const blocks = BLOCKS[b.dataset.m]; if (!blocks) return;
+  const blk = blocks[+b.dataset.i]; const msgEl = document.getElementById(b.dataset.m);
+  if (b.dataset.a === 'copy') copyText(blk.text, msgEl);
+  if (b.dataset.a === 'gmail') gmailDraft(blk.subject || blk.title, blk.text, msgEl, b);
+  if (b.dataset.a === 'dl') saveFile(blk.file, blk.text, msgEl);
+  if (b.dataset.a === 'prompt') copyText(blk.prompt, msgEl).then(() => flash(msgEl, 'ok', '🪄 Prompt copiado — abre Gemini y pégalo tal cual.'));
+});
+
+/* pestañas */
+$$('.tab').forEach(t => t.addEventListener('click', () => {
+  $$('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
+  $$('.mod').forEach(m => m.classList.toggle('act', m.id === 'mod-' + t.dataset.mod));
+  store('tab', t.dataset.mod);
+}));
+$$('.subtab').forEach(t => t.addEventListener('click', () => {
+  $$('.subtab').forEach(x => x.setAttribute('aria-selected', x === t));
+  $('.sub-vacante').style.display = t.dataset.sub === 'vacante' ? '' : 'none';
+  $('.sub-criba').style.display = t.dataset.sub === 'criba' ? '' : 'none';
+}));
+
+/* persistencia simple de formularios */
+$$('input[type=text],input[type=number],textarea,select').forEach(el => {
+  if (!el.id) return;
+  const saved = read('f/' + el.id, null);
+  if (saved !== null) el.value = saved;
+  el.addEventListener('input', () => store('f/' + el.id, el.value));
+});
+{ const t = read('tab', null); if (t) { const b = $$('.tab').find(x => x.dataset.mod === t); if (b) b.click(); } }
+
+const HOY = new Date();
+const FECHA = HOY.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+
+/* ───────────────────────── MÓDULO 1 · VACANTES ───────────────────────── */
+const HASHTAGS = {
+  'Cuentas / Account Management': '#AccountManager #MarketingDeInfluencers #Hiring',
+  'Operaciones': '#Operaciones #Hiring #Barcelona',
+  'Contenido': '#ContentCreator #RedesSociales #Hiring',
+  'Growth Lab': '#YouTube #GrowthMarketing #Hiring',
+  'Finanzas / Administración': '#Finanzas #Administracion #Hiring',
+  'Otro': '#Hiring #Barcelona',
+};
+
+$('#v-gen').addEventListener('click', () => {
+  const puesto = $('#v-puesto').value.trim();
+  if (!puesto) { $('#v-puesto').focus(); return; }
+  const area = $('#v-area').value, mod = $('#v-modalidad').value, contrato = $('#v-contrato').value;
+  const salario = $('#v-salario').value.trim(), mision = $('#v-mision').value.trim(), plazo = $('#v-plazo').value.trim();
+  const resp = lines($('#v-resp').value), must = lines($('#v-must').value), nice = lines($('#v-nice').value);
+
+  const post = [
+    `🚀 Buscamos ${puesto} — Influentia · ${mod}`,
+    ``,
+    `Somos la agencia de referencia en representación de creadores de finanzas e inversión en España y LatAm.${mision ? ' Tu misión: ' + mision + '.' : ''}`,
+    ``,
+    resp.length ? `Qué harás:\n${resp.slice(0,6).map(r => '✔ ' + r).join('\n')}` : null,
+    must.length ? `\nQué buscamos:\n${must.map(r => '• ' + r).join('\n')}` : null,
+    nice.length ? `\n⭐ Suma puntos: ${nice.join(' · ')}` : null,
+    ``,
+    `Ofrecemos: contrato ${contrato.toLowerCase()}${salario ? ' · ' + salario : ''} · un equipo joven en pleno crecimiento.`,
+    ``,
+    `📩 ¿Te encaja o conoces a alguien perfecto? Escríbenos por LinkedIn con tu CV.${plazo ? ' Plazo: hasta el ' + plazo + '.' : ''}`,
+    ``,
+    HASHTAGS[area] || HASHTAGS['Otro'],
+  ].filter(x => x != null).join('\n');
+
+  const desc = [
+    `${puesto.toUpperCase()} · INFLUENTIA`,
+    `${area} · ${mod} · Contrato ${contrato.toLowerCase()}${salario ? ' · ' + salario : ''}`,
+    ``,
+    `Sobre nosotros`,
+    `Influentia es una agencia de representación de creadores especializados en economía, inversión y emprendimiento, con roster propio y campañas para marcas líderes del sector financiero.`,
+    ``,
+    `El puesto`,
+    mision ? `${mision.charAt(0).toUpperCase() + mision.slice(1)}.` : `Formarás parte del equipo de ${area.toLowerCase()} reportando a la dirección de operaciones.`,
+    ``,
+    resp.length ? `Responsabilidades\n${resp.map(r => '— ' + r).join('\n')}` : null,
+    must.length ? `\nRequisitos imprescindibles\n${must.map(r => '— ' + r).join('\n')}` : null,
+    nice.length ? `\nValoramos además\n${nice.map(r => '— ' + r).join('\n')}` : null,
+    ``,
+    `Proceso: revisión de CV → entrevista con operaciones (30') → entrevista final. Respondemos a todas las candidaturas.`,
+    plazo ? `Plazo de candidatura: hasta el ${plazo}.` : null,
+  ].filter(x => x != null).join('\n');
+
+  const pregs = [
+    ...must.slice(0, 3).map(m => `Sobre el requisito «${m}»: cuéntanos tu caso más cercano y un ejemplo reciente.`),
+    salario ? null : '¿Cuál es tu expectativa salarial?',
+    '¿Cuándo podrías incorporarte?',
+    '¿Por qué Influentia y por qué este sector (creadores de finanzas)?',
+  ].filter(Boolean).map((p, i) => `${i + 1}. ${p}`).join('\n');
+
+  // rúbrica: imprescindibles pesan doble, deseables simple, +encaje
+  const crits = [
+    ...must.slice(0, 4).map(m => ({ n: m, w: 2 })),
+    ...nice.slice(0, 2).map(m => ({ n: m + ' (deseable)', w: 1 })),
+    { n: 'Encaje cultural y comunicación', w: 1 },
+  ];
+  const wsum = crits.reduce((s, c) => s + c.w, 0);
+  const rubrica = crits.map(c => ({ nombre: c.n, peso: Math.round(c.w / wsum * 100) }));
+  const drift = 100 - rubrica.reduce((s, c) => s + c.peso, 0);
+  if (rubrica.length) rubrica[0].peso += drift;
+  store('rubrica', rubrica); store('rubrica-puesto', puesto);
+  renderRubrica();
+
+  const promptPulir = `Eres el responsable de talento de Influentia, agencia de representación de creadores de finanzas e inversión (España/LatAm). Pule y mejora esta oferta para LinkedIn: hazla más magnética sin inventar NINGÚN dato nuevo (ni salario, ni beneficios, ni requisitos). Mantén los emojis con moderación, máximo 1.300 caracteres, español de España, tuteo. Devuelve solo el post final.\n\n---\n${post}`;
+
+  renderBlocks($('#v-out'), [
+    { title: 'Post para LinkedIn', text: post, subject: `Vacante: ${puesto}`, file: 'vacante-linkedin.md', prompt: promptPulir },
+    { title: 'Descripción larga (portal de empleo / email)', text: desc, subject: `Oferta de empleo: ${puesto} — Influentia`, file: 'vacante-descripcion.md' },
+    { title: 'Preguntas de filtro para la primera criba', text: pregs, file: 'vacante-preguntas.md' },
+    { title: 'Rúbrica de criba (cargada en la pestaña «2 · Criba»)', text: rubrica.map(r => `${r.peso}%  ${r.nombre}`).join('\n') + '\n\nYa está cargada en la pestaña «2 · Criba de candidatos»: añade candidatos y puntúa 0-5 cada criterio.' },
+  ], 'v-msg');
+});
+outsRegistry.push(() => { if (BLOCKS['v-msg']) renderBlocks($('#v-out'), BLOCKS['v-msg'], 'v-msg'); });
+
+/* criba */
+let rubrica = read('rubrica', [
+  { nombre: 'Experiencia en el rol', peso: 40 },
+  { nombre: 'Conocimiento del sector (influencers/finanzas)', peso: 30 },
+  { nombre: 'Encaje cultural y comunicación', peso: 30 },
+]);
+let candidatos = read('candidatos', []);
+
+function renderRubrica() {
+  rubrica = read('rubrica', rubrica);
+  $('#c-crits').innerHTML = rubrica.map((c, i) => `
+    <div class="crit">
+      <input type="text" value="${esc(c.nombre)}" data-ri="${i}" data-rf="nombre" aria-label="Criterio ${i+1}">
+      <input type="number" value="${c.peso}" min="0" max="100" data-ri="${i}" data-rf="peso" aria-label="Peso %">
+      <button class="del" data-rdel="${i}" title="Quitar criterio">✕</button>
+    </div>`).join('');
+  $('#c-scores').innerHTML = rubrica.map((c, i) => `
+    <div class="cs"><span>${esc(c.nombre)} <span class="hintt">(${c.peso}%)</span></span>
+      <input type="range" min="0" max="5" value="3" step="1" data-si="${i}" aria-label="Puntuación ${esc(c.nombre)}">
+      <output>3</output>
+    </div>`).join('');
+}
+renderRubrica();
+
+$('#c-crits').addEventListener('input', e => {
+  const el = e.target; if (el.dataset.ri === undefined) return;
+  rubrica[+el.dataset.ri][el.dataset.rf] = el.dataset.rf === 'peso' ? (+el.value || 0) : el.value;
+  store('rubrica', rubrica);
+  renderScoresOnly();
+});
+function renderScoresOnly() {
+  $('#c-scores').innerHTML = rubrica.map((c, i) => `
+    <div class="cs"><span>${esc(c.nombre)} <span class="hintt">(${c.peso}%)</span></span>
+      <input type="range" min="0" max="5" value="3" step="1" data-si="${i}" aria-label="Puntuación ${esc(c.nombre)}">
+      <output>3</output>
+    </div>`).join('');
+}
+$('#c-crits').addEventListener('click', e => {
+  const b = e.target.closest('[data-rdel]'); if (!b) return;
+  rubrica.splice(+b.dataset.rdel, 1); store('rubrica', rubrica); renderRubrica();
+});
+$('#c-addcrit').addEventListener('click', () => {
+  rubrica.push({ nombre: 'Nuevo criterio', peso: 10 }); store('rubrica', rubrica); renderRubrica();
+});
+$('#c-scores').addEventListener('input', e => {
+  if (e.target.type === 'range') e.target.nextElementSibling.value = e.target.value;
+});
+
+function scoreOf(scores, rub) {
+  const R = (rub && rub.length) ? rub : rubrica;
+  const wsum = R.reduce((s, c) => s + (+c.peso || 0), 0) || 1;
+  return Math.round(R.reduce((s, c, i) => s + ((scores[i] ?? 0) / 5) * (+c.peso || 0), 0) / wsum * 100);
+}
+const veredicto = p => p >= 70 ? ['avanza', 'Avanza'] : p >= 45 ? ['dudoso', 'Dudoso'] : ['descarta', 'Descarta'];
+
+$('#c-add').addEventListener('click', () => {
+  const nombre = $('#c-nombre').value.trim();
+  if (!nombre) { $('#c-nombre').focus(); return; }
+  const scores = $$('#c-scores input[type=range]').map(r => +r.value);
+  candidatos.push({ nombre, notas: $('#c-notas').value.trim(), scores, rub: rubrica.map(r => ({...r})) });
+  store('candidatos', candidatos);
+  $('#c-nombre').value = ''; $('#c-notas').value = ''; store('f/c-nombre',''); store('f/c-notas','');
+  renderScoresOnly(); renderTabla();
+  flash($('#c-msg'), 'ok', 'Añadido a la criba: ' + nombre + '.');
+});
+
+function renderTabla() {
+  const el = $('#c-tabla');
+  if (!candidatos.length) { el.innerHTML = '<div class="placeholder">Aún no hay candidatos. Añádelos a la izquierda puntuando cada criterio de 0 a 5.</div>'; $('#c-actions').style.display = 'none'; $('#c-count').textContent = ''; return; }
+  const ranked = candidatos.map((c, idx) => ({ ...c, idx, total: scoreOf(c.scores, c.rub) })).sort((a, b) => b.total - a.total);
+  el.innerHTML = `<div style="overflow-x:auto"><table class="criba"><thead><tr><th>#</th><th>Candidato</th><th>Total</th><th>Veredicto</th><th></th><th></th></tr></thead><tbody>` +
+    ranked.map((c, i) => {
+      const [cls, lbl] = veredicto(c.total);
+      return `<tr><td>${i + 1}</td><td><b>${esc(c.nombre)}</b>${c.notas ? `<div class="hintt">${esc(c.notas)}</div>` : ''}</td>
+        <td><b>${c.total}</b>/100</td><td><span class="pill ${cls}">${lbl}</span></td>
+        <td><button class="bbtn" data-mail="${c.idx}" data-kind="${cls}">✉️ ${cls === 'descarta' ? 'descarte' : cls === 'dudoso' ? 'llamada corta' : 'avanzar'}</button></td>
+        <td><button class="del" data-cdel="${c.idx}" title="Quitar">✕</button></td></tr>`;
+    }).join('') + `</tbody></table></div>`;
+  $('#c-actions').style.display = '';
+  $('#c-count').textContent = `— ${candidatos.length} candidato${candidatos.length > 1 ? 's' : ''}, umbrales: ≥70 avanza · 45-69 dudoso · <45 descarta`;
+}
+renderTabla();
+
+$('#c-tabla').addEventListener('click', e => {
+  const del = e.target.closest('[data-cdel]');
+  if (del) { candidatos.splice(+del.dataset.cdel, 1); store('candidatos', candidatos); renderTabla(); return; }
+  const m = e.target.closest('[data-mail]'); if (!m) return;
+  const c = candidatos[+m.dataset.mail]; if (!c) return;
+  const puesto = read('rubrica-puesto', 'la vacante');
+  const first = c.nombre.split(' ')[0];
+  if (m.dataset.kind === 'avanza') {
+    gmailDraft(`Siguiente paso — proceso ${puesto} en Influentia`,
+`Hola ${first}:
+
+¡Gracias por tu candidatura al puesto de ${puesto} en Influentia! Nos ha gustado tu perfil y queremos conocerte: el siguiente paso es una entrevista de 30 minutos por videollamada con el equipo de operaciones.
+
+¿Qué disponibilidad tienes esta semana o la próxima? Proponme dos o tres huecos y te mando la invitación.
+
+Un saludo,
+[Tu nombre] — Influentia`, $('#c-msg2'), m);
+  } else if (m.dataset.kind === 'dudoso') {
+    gmailDraft(`Tu candidatura al puesto de ${puesto} — Influentia`,
+`Hola ${first}:
+
+Gracias por tu candidatura al puesto de ${puesto} en Influentia. Nos gustaría conocerte un poco mejor antes de decidir los siguientes pasos: ¿te iría bien una llamada corta de 15-20 minutos esta semana?
+
+Proponme un par de huecos y te llamo.
+
+Un saludo,
+[Tu nombre] — Influentia`, $('#c-msg2'), m);
+  } else {
+    gmailDraft(`Proceso ${puesto} — Influentia`,
+`Hola ${first}:
+
+Muchas gracias por tu interés en el puesto de ${puesto} y por el tiempo dedicado. En esta ocasión hemos decidido avanzar con perfiles que se ajustan más a lo que buscábamos ahora mismo, así que no seguiremos adelante con tu candidatura.
+
+Si quieres que tengamos en cuenta tu perfil para futuros procesos, respóndenos a este correo y guardaremos tu candidatura con tu autorización; si no, eliminaremos tus datos al cerrar este proceso. Te deseamos mucha suerte.
+
+Un saludo,
+[Tu nombre] — Influentia`, $('#c-msg2'), m);
+  }
+});
+
+function rankingMd() {
+  const puesto = read('rubrica-puesto', 'vacante');
+  const ranked = candidatos.map(c => ({ ...c, total: scoreOf(c.scores, c.rub) })).sort((a, b) => b.total - a.total);
+  return `# Criba de candidatos — ${puesto}\n\nGenerado el ${FECHA} con el Copiloto de Operaciones.\nRúbrica: ${rubrica.map(r => `${r.nombre} (${r.peso}%)`).join(' · ')}\nUmbrales: ≥70 avanza · 45-69 dudoso · <45 descarta\n\n| # | Candidato | Total | Veredicto | Notas |\n|---|---|---|---|---|\n` +
+    ranked.map((c, i) => `| ${i + 1} | ${c.nombre} | ${c.total}/100 | ${veredicto(c.total)[1]} | ${c.notas || ''} |`).join('\n') +
+    `\n\nDetalle por criterio:\n` +
+    ranked.map(c => `\n**${c.nombre}** — ${c.total}/100\n` + ((c.rub && c.rub.length) ? c.rub : rubrica).map((r, i) => `- ${r.nombre}: ${c.scores[i] ?? 0}/5`).join('\n')).join('\n');
+}
+$('#c-export').addEventListener('click', () => saveFile('criba-ranking.md', rankingMd(), $('#c-msg2')));
+$('#c-copy').addEventListener('click', () => copyText(rankingMd(), $('#c-msg2')));
+$('#c-clear').addEventListener('click', () => {
+  if (!confirm('¿Vaciar toda la criba? Esta acción no se puede deshacer.')) return;
+  candidatos = []; store('candidatos', candidatos); renderTabla();
+});
+$('#c-prompt').addEventListener('click', () => {
+  const puesto = read('rubrica-puesto', '[puesto]');
+  const p = `Eres el responsable de talento de Influentia (agencia de representación de creadores de finanzas e inversión). Evalúa el CV que te pego abajo para el puesto de ${puesto}, usando EXACTAMENTE esta rúbrica:\n\n${rubrica.map(r => `- ${r.nombre} (peso ${r.peso}%)`).join('\n')}\n\nPara cada criterio: puntúa de 0 a 5 con una frase de evidencia LITERAL del CV (si no hay evidencia, puntúa bajo y dilo). Después: nota total ponderada sobre 100, veredicto (≥70 avanza · 45-69 dudoso · <45 descarta), 3 preguntas específicas para la entrevista basadas en los huecos del CV, y cualquier señal de alerta. No inventes experiencia que no esté escrita.\n\n--- CV ---\n[PEGA AQUÍ EL TEXTO DEL CV]`;
+  copyText(p, $('#c-msg')).then(() => flash($('#c-msg'), 'ok', '🪄 Prompt copiado — abre Gemini, pégalo y añade debajo el texto del CV.'));
+});
+
+/* ───────────────────────── MÓDULO 2 · COMUNICADOS ───────────────────────── */
+const COM_META = {
+  incorporacion: { pre: '[EQUIPO]', ctx: 'Buenas noticias: crece la familia.' },
+  proceso:       { pre: '[PROCESO]', ctx: 'Cambiamos una forma de trabajar para que el día a día sea más fácil. Leedlo entero, por favor.' },
+  aviso:         { pre: '[AVISO]', ctx: 'Aviso importante para que nadie se quede sin la información.' },
+  incidencia:    { pre: '[INCIDENCIA]', ctx: 'Ha habido una incidencia y os contamos qué ha pasado y cómo queda resuelto — transparencia ante todo.' },
+  logro:         { pre: '[LOGRO] 🎉', ctx: '¡Toca celebrar! Un logro del equipo que merece mención.' },
+  recordatorio:  { pre: '[RECORDATORIO]', ctx: 'Recordatorio rápido para que no se nos pase.' },
+};
+
+$('#m-gen').addEventListener('click', () => {
+  const titulo = $('#m-titulo').value.trim();
+  if (!titulo) { $('#m-titulo').focus(); return; }
+  const tipo = $('#m-tipo').value, quien = $('#m-quien').value, tono = $('#m-tono').value;
+  const hechos = lines($('#m-hechos').value);
+  const accion = $('#m-accion').value.trim(), fecha = $('#m-fecha').value.trim(), enlace = $('#m-enlace').value.trim();
+  const meta = COM_META[tipo];
+
+  const saludo = tono === 'urgente' ? 'Equipo:' : tono === 'neutro' ? 'Hola a todos:' : 'Hola equipo 👋';
+  const asunto = `${tono === 'urgente' ? '[URGENTE] ' : ''}${meta.pre} ${titulo}${fecha && tono === 'urgente' ? ' — antes del ' + fecha : ''}`;
+
+  const cuerpo = [
+    saludo,
+    ``,
+    meta.ctx,
+    ``,
+    titulo + (hechos.length ? ':' : '.'),
+    hechos.length ? hechos.map(h => '• ' + h).join('\n') : null,
+    ``,
+    accion ? `👉 Qué tenéis que hacer: ${accion}${fecha ? ` (antes del ${fecha})` : ''}.` : (fecha ? `📅 Fecha clave: ${fecha}.` : null),
+    enlace ? `🔗 Toda la info: ${enlace}` : null,
+    ``,
+    tipo === 'incidencia' ? 'Si esto os ha afectado directamente y algo sigue sin cuadrar, escribidme y lo vemos.' : 'Cualquier duda, respondedme a este correo.',
+    ``,
+    `Txell`,
+  ].filter(x => x != null).join('\n');
+
+  const corto = `${meta.pre} ${titulo}${hechos.length ? ' — ' + hechos[0] : ''}${accion ? `. 👉 ${accion}` : ''}${fecha ? ` (antes del ${fecha})` : ''}${enlace ? ` · ${enlace}` : ''}`;
+
+  const checklist = [
+    '□ Nombres, cifras y fechas verificados (nada de memoria).',
+    '□ El enlace abre y tiene los permisos correctos para ' + quien.toLowerCase() + '.',
+    accion ? '□ La acción pedida es UNA y concreta (si son varias, mejor dos comunicados).' : '□ ¿Seguro que no hay que pedir ninguna acción? Si la hay, añádela.',
+    (tipo === 'incidencia' || tipo === 'proceso') ? '□ Visto bueno de Artur (toca proceso/incidencia).' : '□ ¿Toca algo sensible (nóminas, legal, clientes)? → visto bueno de Artur antes de enviar.',
+    '□ Destinatarios: ' + quien + ' — ¿es la lista correcta, ni de más ni de menos?',
+    '□ Momento de envío: evita viernes por la tarde salvo urgencia real.',
+  ].join('\n');
+
+  const promptPulir = `Eres la manager de operaciones de Influentia (agencia de creadores de finanzas). Pule este comunicado interno: tono ${tono === 'cercano' ? 'cercano y humano' : tono === 'urgente' ? 'directo y accionable, sin alarmismo' : 'profesional y claro'}, español de España, trato de vosotros (va a todo el equipo), máximo 150 palabras. NO inventes datos, fechas ni nombres nuevos: solo mejora claridad y calidez. Devuelve solo el comunicado.\n\n---\n${cuerpo}`;
+
+  renderBlocks($('#m-out'), [
+    { title: `Email para ${quien.toLowerCase()}`, text: `Asunto: ${asunto}\n\n${cuerpo}`, subject: asunto, file: 'comunicado.md', prompt: promptPulir },
+    { title: 'Versión corta (chat / WhatsApp del equipo)', text: corto },
+    { title: 'Checklist antes de enviar', text: checklist },
+  ], 'm-msg');
+});
+outsRegistry.push(() => { if (BLOCKS['m-msg']) renderBlocks($('#m-out'), BLOCKS['m-msg'], 'm-msg'); });
+
+/* ───────────────────────── MÓDULO 3 · GRUPOS Y EVENTOS ───────────────────────── */
+$('#g-mode-grupo').addEventListener('click', () => setGMode(true));
+$('#g-mode-evento').addEventListener('click', () => setGMode(false));
+function setGMode(grupo) {
+  $('#g-mode-grupo').setAttribute('aria-pressed', grupo);
+  $('#g-mode-evento').setAttribute('aria-pressed', !grupo);
+  $('#g-form-grupo').style.display = grupo ? '' : 'none';
+  $('#g-form-evento').style.display = grupo ? 'none' : '';
+}
+
+$('#g-gen-grupo').addEventListener('click', () => {
+  const nombre = $('#g-nombre').value.trim(), proposito = $('#g-proposito').value.trim();
+  if (!nombre) { $('#g-nombre').focus(); return; }
+  if (!proposito) { $('#g-proposito').focus(); return; }
+  const miembros = lines($('#g-miembros').value);
+  const lider = $('#g-lider').value.trim() || 'Txell';
+  const cadencia = $('#g-cadencia').value, kickoff = $('#g-kickoff').value.trim();
+
+  const ficha = [
+    `GRUPO DE TRABAJO · ${nombre.toUpperCase()}`,
+    ``,
+    `Misión: ${proposito}`,
+    `Lidera: ${lider}${miembros.length ? `\nMiembros: ${miembros.join(', ')}` : ''}`,
+    `Cadencia: ${cadencia.toLowerCase()} — reunión de 25 minutos, agenda fija:`,
+    `  1) Avances desde la última (5')`,
+    `  2) Bloqueos y decisiones necesarias (10')`,
+    `  3) Siguientes pasos con dueño y fecha (10')`,
+    ``,
+    `Kickoff${kickoff ? ' — ' + kickoff : ''} (30 minutos):`,
+    `  · Contexto y objetivo: por qué existe este grupo y qué entrega (10')`,
+    `  · Reparto de responsabilidades: un dueño por frente (10')`,
+    `  · Primeros pasos y fecha del primer entregable (10')`,
+    ``,
+    `Reglas del grupo:`,
+    `  · Cada tarea tiene UN dueño y UNA fecha.`,
+    `  · Lo que no queda escrito tras la reunión no existe: acta de 5 líneas al terminar.`,
+    `  · Los bloqueos se avisan el mismo día, no en la siguiente reunión.`,
+    `  · El grupo se disuelve al entregar: no se convierte en reunión eterna.`,
+  ].join('\n');
+
+  const invitacion = `Hola:
+
+Montamos un grupo de trabajo — «${nombre}» — con una misión concreta: ${proposito}.
+
+${miembros.length ? `Quiénes: ${miembros.join(', ')} (lidera ${lider}).` : `Lidera ${lider}.`}
+Cadencia: ${cadencia.toLowerCase()}, reuniones de 25 minutos con agenda fija (avances / bloqueos / siguientes pasos).
+${kickoff ? `Kickoff: ${kickoff} (30 minutos).` : 'El kickoff será esta semana: os paso convocatoria aparte.'}
+
+Antes del kickoff, pensad cada uno: qué podéis aportar y qué necesitáis del resto.
+
+¡Gracias!
+${lider}`;
+
+  renderBlocks($('#g-out'), [
+    { title: 'Ficha del grupo (pégala en el doc del grupo)', text: ficha, file: 'grupo-' + nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.md' },
+    { title: 'Invitación a los miembros', text: invitacion, subject: `Grupo de trabajo «${nombre}» — kickoff${kickoff ? ' ' + kickoff : ''}`, prompt: `Pule esta invitación a un grupo de trabajo interno: tono cercano de compañera (no de jefa), español de España, máximo 120 palabras, sin inventar datos.\n\n---\n${invitacion}` },
+  ], 'g-msg');
+});
+
+const EVENTO_DEF = {
+  'Comida de equipo': { dur: '2 h (mediodía)', extra: 'Reserva mesa larga (mejor que redonda: se habla más).' },
+  'Afterwork': { dur: '2-3 h (desde las 18:30)', extra: 'Sitio con zona reservada; primera ronda a cargo de la empresa como mínimo.' },
+  'Teambuilding (actividad)': { dur: 'media jornada', extra: 'Actividad + comida SIEMPRE: la actividad rompe el hielo, la mesa consolida.' },
+  'Celebración (hito/cumple)': { dur: '1-2 h', extra: 'Que el homenajeado no organice nada. Tarta o detalle simbólico.' },
+  'Jornada offsite': { dur: 'día completo', extra: 'Mañana de trabajo (2 bloques con objetivo escrito) + tarde libre/actividad. Cerrar agenda 1 semana antes.' },
+};
+
+$('#g-gen-evento').addEventListener('click', () => {
+  const tipo = $('#e-tipo').value;
+  const fecha = $('#e-fecha').value.trim() || 'por definir';
+  const pers = +$('#e-personas').value || 0;
+  const budget = +$('#e-budget').value || 0;
+  const zona = $('#e-zona').value.trim(), restric = $('#e-restric').value.trim();
+
+  if (tipo === 'sorpresa') {
+    const nivel = budget === 0 ? 'sin dato de presupuesto' : budget < 20 ? 'presupuesto contenido' : budget <= 50 ? 'presupuesto medio' : 'presupuesto alto';
+    const ideas = budget !== 0 && budget < 20 ? [
+      '1) Vermut + torneo de juegos en la oficina (futbolín/mario kart/trivial de la empresa) — barato y compite todo el mundo.',
+      '2) Picnic en la Ciutadella con juegos de exterior — 0 € de local, solo catering básico.',
+      '3) Ruta de tapas por el barrio con «pasaporte» sellado por parada — convierte una cena normal en juego.',
+    ] : budget !== 0 && budget <= 50 ? [
+      '1) Comida + karting o escape room — el clásico que nunca falla para competitividad sana.',
+      '2) Taller de paella o cocina + comerse lo cocinado — colaborativo de verdad, no postureo.',
+      '3) Salida en barco 2 h (grupos desde ~30 €/pax en BCN) + vermut a bordo.',
+    ] : [
+      '1) Offsite de día completo fuera de Barcelona: masía con mañana de trabajo + tarde de piscina/actividad.',
+      '2) Experiencia gastro: menú degustación con maridaje en grupo (privado si sois +10).',
+      '3) Actividad premium (vela, buggies, bodega con cata) + cena de cierre.',
+    ];
+    renderBlocks($('#g-out'), [
+      { title: `3 ideas (${nivel}${pers ? `, ${pers} personas` : ''})`, text: ideas.join('\n\n') + '\n\nElige una, vuelve aquí con el tipo concreto y te genero el plan completo con checklist y presupuesto.' },
+    ], 'g-msg');
+    return;
+  }
+
+  const def = EVENTO_DEF[tipo];
+  const total = pers && budget ? pers * budget : 0;
+  const plan = [
+    `PLAN · ${tipo.toUpperCase()}`,
+    ``,
+    `Fecha: ${fecha} · Duración orientativa: ${def.dur}${pers ? ` · Asistentes: ~${pers}` : ''}`,
+    zona ? `Zona: ${zona}` : null,
+    restric ? `Restricciones a respetar: ${restric}` : null,
+    budget ? `Presupuesto: ${budget} €/persona${total ? ` → ~${total} € + 10% colchón = ${Math.round(total * 1.1)} € tope` : ''}` : 'Presupuesto: por definir (fijarlo ANTES de reservar).',
+    ``,
+    `Consejo del formato: ${def.extra}`,
+    ``,
+    `CHECKLIST CON PLAZOS`,
+    `T-2 semanas:`,
+    `  □ Confirmar fecha con encuesta rápida (2 opciones máximo, cerrar en 48 h).`,
+    `  □ ${budget && total > 500 ? `Visto bueno de Artur al presupuesto (~${Math.round(total * 1.1)} €).` : 'Confirmar presupuesto con dirección si supera lo habitual.'}`,
+    `  □ Preguntar alergias/dietas en el mismo formulario de la encuesta.`,
+    `  □ Reservar sitio${zona ? ` (${zona})` : ''} — pedir presupuesto por escrito.`,
+    `T-1 semana:`,
+    `  □ Confirmar lista definitiva de asistentes.`,
+    `  □ Confirmar reserva y pasar nº final de personas + dietas al local.`,
+    `T-2 días:`,
+    `  □ Recordatorio al equipo con hora, sitio exacto y cómo llegar.`,
+    `  □ Confirmar quién llega antes para recibir.`,
+    `Día D:`,
+    `  □ Llegar 15' antes.`,
+    `  □ Foto de equipo 📸 (para redes internas… ¡o LinkedIn!).`,
+    `  □ Pagar con tarjeta de empresa y pedir FACTURA a nombre de la empresa → el ticket va directo al sistema de gastos.`,
+  ].filter(x => x != null).join('\n');
+
+  const invitacion = `Hola equipo 👋
+
+¡${tipo === 'Celebración (hito/cumple)' ? 'Tenemos algo que celebrar' : 'Toca plan de equipo'}! Estamos organizando: ${tipo.toLowerCase()} ${fecha !== 'por definir' ? `el ${fecha}` : '(fecha por confirmar — os paso encuesta)'}${zona ? `, por la zona de ${zona}` : ''}.
+
+Para cuadrarlo todo necesito dos cosas ANTES del jueves:
+1) Confírmame si te apuntas (responde a este correo con un SÍ/NO).
+2) Si tienes alguna alergia o restricción de comida, dímelo aquí.
+
+¡Contamos contigo!
+Txell`;
+
+  renderBlocks($('#g-out'), [
+    { title: 'Plan y checklist con plazos', text: plan, file: 'plan-evento.md' },
+    { title: 'Invitación / confirmación de asistencia', text: invitacion, subject: `${tipo} — ${fecha !== 'por definir' ? fecha : 'fecha por confirmar'} 🎉`, prompt: `Pule esta invitación a un evento interno de equipo: tono alegre pero natural (nada corporativo-forzado), español de España, máximo 110 palabras, sin inventar datos nuevos.\n\n---\n${invitacion}` },
+  ], 'g-msg');
+});
+outsRegistry.push(() => { if (BLOCKS['g-msg']) renderBlocks($('#g-out'), BLOCKS['g-msg'], 'g-msg'); });
+</script>
+</body>
+</html>
